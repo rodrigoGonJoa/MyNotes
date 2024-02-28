@@ -3,8 +3,8 @@ package com.rodrigo.mynotes.ui.add_edit_note
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.rodrigo.mynotes.domain.model.InvalidNoteException
 import com.rodrigo.mynotes.domain.use_case.NoteUseCases
+import com.rodrigo.mynotes.util.Outcome
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,11 +29,16 @@ class AddEditViewModel @Inject constructor(
     private fun getNoteIfExist() {
         noteId?.let {id ->
             viewModelScope.launch {
-                noteUseCases.getNoteById(id)?.also {dbNote ->
-                    _state.update {
-                        it.copy(
-                            note = dbNote,
-                            loading = false
+                val result = noteUseCases.getNoteById(id)
+                _state.update {state ->
+                    when (result) {
+                        is Outcome.Error -> state.copy(
+                            notificationMessage = result.message
+                                ?: "Ha ocurrido un error al obtener la nota."
+                        )
+
+                        is Outcome.Success -> state.copy(
+                            note = result.value
                         )
                     }
                 }
@@ -41,25 +46,26 @@ class AddEditViewModel @Inject constructor(
         }
     }
 
+
     fun saveNote() {
         viewModelScope.launch {
-            try {
-                noteUseCases.addNote(_state.value.note)
-            } catch (e: InvalidNoteException) {
-                _state.update {state ->
-                    state.copy(
-                        notificationMessage = e.message
-                            ?: "AddEditViewModel - saveNote - InvalidNoteException"
+            val result = noteUseCases.addNote(_state.value.note)
+            _state.update {state ->
+                when (result) {
+                    is Outcome.Error -> state.copy(
+                        notificationMessage = result.message
+                            ?: "Ha ocurrido un error al guardar la nota.",
+                        noteSaved = false
                     )
-                }
-            } catch (e: Exception) {
-                _state.update {state ->
-                    state.copy(
-                        notificationMessage = e.message
-                            ?: "AddEditViewModel - saveNote - Exception"
+
+                    is Outcome.Success -> state.copy(
+                        notificationMessage = "Nota guardada correctamente.",
+                        noteSaved = true
                     )
                 }
             }
         }
     }
+
+
 }

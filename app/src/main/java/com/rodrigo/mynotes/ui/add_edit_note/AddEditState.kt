@@ -5,6 +5,5 @@ import com.rodrigo.mynotes.domain.model.Note
 data class AddEditState(
     val note: Note = Note(),
     val noteSaved: Boolean = false,
-    val loading: Boolean = true,
     val notificationMessage: String = ""
 )
