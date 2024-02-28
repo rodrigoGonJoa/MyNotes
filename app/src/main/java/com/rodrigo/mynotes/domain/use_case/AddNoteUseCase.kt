@@ -15,7 +15,11 @@ class AddNoteUseCase @Inject constructor(
         if (note.content.isBlank()) {
             return Outcome.Error(message = "El contenido no puede estar vacío.")
         }
-        noteRepository.addNote(note)
-        return Outcome.Success(Unit)
+        try {
+            noteRepository.addNote(note)
+        } catch (e: Exception) {
+            return Outcome.Error(message = "Ha ocurrido un error al guardar la nota.")
+        }
+        return Outcome.Success(Unit, message = "Nota guardada correctamente.")
     }
 }

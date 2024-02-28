@@ -9,13 +9,14 @@ class GetNoteByIdUseCase @Inject constructor(
     private val noteRepository: NoteRepository
 ) {
     suspend operator fun invoke(noteId: Int): Outcome<Note> {
-        val note = noteRepository.getNoteById(noteId)
-
-        return if (note == null) {
-            Outcome.Error("No se encontró la nota.")
-        } else {
-            Outcome.Success(note)
+        try {
+            val note = noteRepository.getNoteById(noteId)
+            if (note == null) {
+                return Outcome.Error("No se encontró la nota.")
+            }
+            return Outcome.Success(note, "")
+        } catch (e: Exception) {
+            return Outcome.Error("Ha ocurrido un error al obtener la nota.")
         }
-
     }
 }
