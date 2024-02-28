@@ -1,4 +1,4 @@
-package com.rodrigo.mynotes.ui.add_edit_note
+package com.rodrigo.mynotes.presentation.add_edit_note
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -34,7 +34,6 @@ class AddEditViewModel @Inject constructor(
                     when (result) {
                         is Outcome.Error -> state.copy(
                             notificationMessage = result.message
-                                ?: "Ha ocurrido un error al obtener la nota."
                         )
 
                         is Outcome.Success -> state.copy(
@@ -53,19 +52,35 @@ class AddEditViewModel @Inject constructor(
             _state.update {state ->
                 when (result) {
                     is Outcome.Error -> state.copy(
-                        notificationMessage = result.message
-                            ?: "Ha ocurrido un error al guardar la nota.",
-                        noteSaved = false
+                        notificationMessage = result.message,
+                        successfulAction = false
                     )
 
                     is Outcome.Success -> state.copy(
-                        notificationMessage = "Nota guardada correctamente.",
-                        noteSaved = true
+                        notificationMessage = result.message,
+                        successfulAction = true
                     )
                 }
             }
         }
     }
 
+    fun deleteNote() {
+        viewModelScope.launch {
+            val result = noteUseCases.deleteNote(_state.value.note.id)
+            _state.update {state ->
+                when (result) {
+                    is Outcome.Error -> state.copy(
+                        notificationMessage = result.message,
+                        successfulAction = false
+                    )
 
+                    is Outcome.Success -> state.copy(
+                        notificationMessage = result.message,
+                        successfulAction = true
+                    )
+                }
+            }
+        }
+    }
 }

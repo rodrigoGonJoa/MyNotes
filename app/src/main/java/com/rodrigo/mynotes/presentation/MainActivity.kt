@@ -1,4 +1,4 @@
-package com.rodrigo.mynotes.ui
+package com.rodrigo.mynotes.presentation
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
