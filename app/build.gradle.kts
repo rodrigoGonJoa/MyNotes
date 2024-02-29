@@ -66,7 +66,8 @@ android {
 }
 
 dependencies {
-//    detekt -p detekt-compose-<VERSION>-all.jar -c your/config/detekt.yml
+testImplementation("org.testng:testng:6.9.6")
+    //    detekt -p detekt-compose-<VERSION>-all.jar -c your/config/detekt.yml
 //    detekt -p "C:\Program Files\Java\Resources\detekt-compose-0.3.11-all.jar" -c "config/detekt/detekt.yml"
     detektPlugins(libs.detekt.compose)
 
@@ -114,23 +115,27 @@ dependencies {
 //    ksp(libs.moshi.codegen)
 
     // Hilt and instrumented tests.
-//    androidTestImplementation(libs.hilt.android.testing)
-//    kspAndroidTest(libs.hilt.android.compiler)
+    androidTestImplementation(libs.hilt.android.testing)
+    kspAndroidTest(libs.hilt.android.compiler)
 
     // Hilt and Robolectric tests.
-//    testImplementation(libs.hilt.android.testing)
-//    kspTest(libs.hilt.android.compiler)
+    testImplementation(libs.hilt.android.testing)
+    kspTest(libs.hilt.android.compiler)
 
     // Instrumented tests
-//    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-//    debugImplementation(libs.androidx.compose.ui.test.manifest)
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 
     // Local tests: jUnit, coroutines, Android runner
-//    testImplementation(libs.junit)
-//    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
 
     // Instrumented tests: jUnit rules and runners
-//    androidTestImplementation(libs.androidx.test.core)
-//    androidTestImplementation(libs.androidx.test.ext.junit)
-//    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.core)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.test.runner)
+
+
+    testImplementation("org.mockito:mockito-core:3.12.4")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:3.2.0")
 }

@@ -2,24 +2,49 @@ package com.rodrigo.mynotes.domain.use_case
 
 import com.rodrigo.mynotes.domain.model.Note
 import com.rodrigo.mynotes.domain.repository.NoteRepository
-import com.rodrigo.mynotes.util.Outcome
+import com.rodrigo.mynotes.util.DataState
+import com.rodrigo.mynotes.util.UiState
+import com.rodrigo.mynotes.util.toUiState
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
 
 class AddNoteUseCase @Inject constructor(
     private val noteRepository: NoteRepository
 ) {
-    suspend operator fun invoke(note: Note): Outcome<Unit> {
+    operator fun invoke(note: Note): Flow<UiState<Unit>> {
+        return flow {
+            emit(UiState.LoadingState(true))
+            if (handleDomainRules(note = note, flowCollector = this)) {
+                handleRepositoryResult(note = note, flowCollector = this)
+            }
+            emit(UiState.LoadingState(false))
+        }
+    }
+
+    private suspend fun handleDomainRules(
+        note: Note,
+        flowCollector: FlowCollector<UiState<Unit>>
+    ): Boolean {
         if (note.title.isBlank()) {
-            return Outcome.Error(message = "El titulo no puede estar vacío.")
+            flowCollector.emit(UiState.ErrorState("El titulo de la nota no puede estar vacío."))
+            return false
         }
         if (note.content.isBlank()) {
-            return Outcome.Error(message = "El contenido no puede estar vacío.")
+            flowCollector.emit(UiState.ErrorState("El contenido de la nota no puede estar vacío."))
+            return false
         }
-        try {
-            noteRepository.addNote(note)
-        } catch (e: Exception) {
-            return Outcome.Error(message = "Ha ocurrido un error al guardar la nota.")
+        return true
+    }
+
+    private suspend fun handleRepositoryResult(
+        note: Note,
+        flowCollector: FlowCollector<UiState<Unit>>
+    ) {
+        when (val result = noteRepository.addNote(note)) {
+            is DataState.ErrorState -> flowCollector.emit(result.toUiState())
+            is DataState.SuccessState -> flowCollector.emit(result.toUiState())
         }
-        return Outcome.Success(Unit, message = "Nota guardada correctamente.")
     }
 }

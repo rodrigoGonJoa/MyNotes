@@ -6,3 +6,5 @@ data class NoteListState(
     val notes: List<Note> = emptyList(),
     val notificationMessage: String = ""
 )
+
+// TODO: crear el archivo de appmodule y screens

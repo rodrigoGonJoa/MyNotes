@@ -3,7 +3,7 @@ package com.rodrigo.mynotes.presentation.note_list
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rodrigo.mynotes.domain.use_case.NoteUseCases
-import com.rodrigo.mynotes.util.Outcome
+import com.rodrigo.mynotes.util.DataState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,11 +27,11 @@ class NoteListViewModel @Inject constructor(
             noteUseCases.getNotes().collect {result ->
                 _state.update {state ->
                     when (result) {
-                        is Outcome.Error -> state.copy(
+                        is DataState.ErrorState -> state.copy(
                             notificationMessage = result.message
                         )
 
-                        is Outcome.Success -> state.copy(
+                        is DataState.SuccessState -> state.copy(
                             notes = result.value
                         )
                     }
