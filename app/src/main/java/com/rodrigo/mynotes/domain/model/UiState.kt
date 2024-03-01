@@ -1,4 +1,6 @@
-package com.rodrigo.mynotes.util
+package com.rodrigo.mynotes.domain.model
+
+import com.rodrigo.mynotes.data.model.DataState
 
 sealed class UiState<out T> {
     data class LoadingState<T>(val loading: Boolean) : UiState<T>()

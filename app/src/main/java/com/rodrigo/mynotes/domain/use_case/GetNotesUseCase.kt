@@ -1,26 +1,34 @@
 package com.rodrigo.mynotes.domain.use_case
 
+import com.rodrigo.mynotes.data.model.DataState
+import com.rodrigo.mynotes.data.model.toUiState
 import com.rodrigo.mynotes.domain.model.Note
+import com.rodrigo.mynotes.domain.model.UiState
 import com.rodrigo.mynotes.domain.repository.NoteRepository
-import com.rodrigo.mynotes.util.DataState
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 class GetNotesUseCase @Inject constructor(
     private val noteRepository: NoteRepository
 ) {
-    operator fun invoke(): Flow<DataState<List<Note>>> {
-        val notes = noteRepository.getNotes()
-        return notes.mapNotNull { noteList ->
-            if (noteList.isNotEmpty()) {
-                DataState.SuccessState(noteList, "")
-            } else {
-                DataState.ErrorState("La lista de notas está vacía.")
+    operator fun invoke(): Flow<UiState<List<Note>>> {
+        return flow {
+            emit(UiState.LoadingState(true))
+            handleRepositoryResult(flowCollector = this)
+            emit(UiState.LoadingState(false))
+        }
+    }
+    private suspend fun handleRepositoryResult(
+        flowCollector: FlowCollector<UiState<List<Note>>>
+    ) {
+        noteRepository.getNotes().map {dataState ->
+            when (dataState) {
+                is DataState.ErrorState -> flowCollector.emit(dataState.toUiState())
+                is DataState.SuccessState -> flowCollector.emit(dataState.toUiState())
             }
-        }.catch {
-            DataState.ErrorState("Ha ocurrido un error al obtener la lista de notas.")
         }
     }
 }

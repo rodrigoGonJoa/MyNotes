@@ -2,11 +2,13 @@ package com.rodrigo.mynotes.presentation.note_list
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.rodrigo.mynotes.data.model.DataState
+import com.rodrigo.mynotes.domain.model.UiState
 import com.rodrigo.mynotes.domain.use_case.NoteUseCases
-import com.rodrigo.mynotes.util.DataState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -24,15 +26,21 @@ class NoteListViewModel @Inject constructor(
 
     fun getNotes() {
         viewModelScope.launch {
-            noteUseCases.getNotes().collect {result ->
+            noteUseCases.getNotes().collectLatest {uiState ->
                 _state.update {state ->
-                    when (result) {
-                        is DataState.ErrorState -> state.copy(
-                            notificationMessage = result.message
+                    when(uiState){
+                        is UiState.LoadingState -> state.copy(
+                            loading = uiState.loading
+                        )
+                        is UiState.ErrorState -> state.copy(
+                            notificationMessage = uiState.message,
+                            successfulAction = false
                         )
 
-                        is DataState.SuccessState -> state.copy(
-                            notes = result.value
+                        is UiState.SuccessState -> state.copy(
+                            notes = uiState.value,
+                            notificationMessage = uiState.message,
+                            successfulAction = true
                         )
                     }
                 }

@@ -1,9 +1,9 @@
 package com.rodrigo.mynotes.domain.use_case
 
+import com.rodrigo.mynotes.data.model.DataState
+import com.rodrigo.mynotes.data.model.toUiState
+import com.rodrigo.mynotes.domain.model.UiState
 import com.rodrigo.mynotes.domain.repository.NoteRepository
-import com.rodrigo.mynotes.util.DataState
-import com.rodrigo.mynotes.util.UiState
-import com.rodrigo.mynotes.util.toUiState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.flow

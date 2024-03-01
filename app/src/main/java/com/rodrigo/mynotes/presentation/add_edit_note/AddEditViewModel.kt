@@ -3,8 +3,8 @@ package com.rodrigo.mynotes.presentation.add_edit_note
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.rodrigo.mynotes.domain.model.UiState
 import com.rodrigo.mynotes.domain.use_case.NoteUseCases
-import com.rodrigo.mynotes.util.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow

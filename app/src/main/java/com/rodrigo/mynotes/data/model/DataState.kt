@@ -1,4 +1,6 @@
-package com.rodrigo.mynotes.util
+package com.rodrigo.mynotes.data.model
+
+import com.rodrigo.mynotes.domain.model.UiState
 
 sealed class DataState<out T> {
     data class SuccessState<T>(val value: T, val message: String): DataState<T>()

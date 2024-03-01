@@ -8,6 +8,7 @@ import androidx.room.Upsert
 import com.rodrigo.mynotes.data.model.NoteEntity
 import com.rodrigo.mynotes.domain.model.InvalidNoteException
 import com.rodrigo.mynotes.util.Constants
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface NoteDao {
@@ -70,4 +71,7 @@ interface NoteDao {
         }
         return isAdded
     }
+
+    @Query("SELECT * FROM ${Constants.NOTE_TABLE_NAME}")
+    fun getNotes(): Flow<List<NoteEntity>>
 }

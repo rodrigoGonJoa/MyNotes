@@ -4,7 +4,7 @@ import com.rodrigo.mynotes.domain.model.Note
 
 data class NoteListState(
     val notes: List<Note> = emptyList(),
-    val notificationMessage: String = ""
+    val notificationMessage: String = "",
+    val loading: Boolean = true,
+    val successfulAction: Boolean = false
 )
-
-// TODO: crear el archivo de appmodule y screens
