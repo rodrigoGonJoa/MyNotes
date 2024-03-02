@@ -1,5 +1,6 @@
 package com.rodrigo.mynotes.domain.use_case
 
+import android.util.Log
 import com.rodrigo.mynotes.data.model.DataState
 import com.rodrigo.mynotes.data.model.toUiState
 import com.rodrigo.mynotes.domain.model.Note
@@ -13,7 +14,7 @@ import javax.inject.Inject
 class AddNoteUseCase @Inject constructor(
     private val noteRepository: NoteRepository
 ) {
-    operator fun invoke(note: Note): Flow<UiState<Unit>> {
+    operator fun invoke(note: Note): Flow<UiState<Any>> {
         return flow {
             emit(UiState.LoadingState(true))
             if (handleDomainRules(note = note, flowCollector = this)) {
@@ -25,7 +26,7 @@ class AddNoteUseCase @Inject constructor(
 
     private suspend fun handleDomainRules(
         note: Note,
-        flowCollector: FlowCollector<UiState<Unit>>
+        flowCollector: FlowCollector<UiState<Any>>
     ): Boolean {
         if (note.title.isBlank()) {
             flowCollector.emit(UiState.ErrorState("El titulo de la nota no puede estar vacío."))
@@ -40,11 +41,21 @@ class AddNoteUseCase @Inject constructor(
 
     private suspend fun handleRepositoryResult(
         note: Note,
-        flowCollector: FlowCollector<UiState<Unit>>
+        flowCollector: FlowCollector<UiState<Any>>
     ) {
-        when (val result = noteRepository.addNote(note)) {
+        val result = if (note.id == null) {
+            noteRepository.addNote(note)
+        } else {
+            noteRepository.updateNote(note)
+        }
+
+        when (result) {
             is DataState.ErrorState -> flowCollector.emit(result.toUiState())
-            is DataState.SuccessState -> flowCollector.emit(result.toUiState())
+
+            is DataState.SuccessState -> {
+                Log.d("addnoteUseCase", result.type.toString())
+                flowCollector.emit(result.toUiState())
+            }
         }
     }
 }
