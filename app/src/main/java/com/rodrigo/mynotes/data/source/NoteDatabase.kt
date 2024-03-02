@@ -7,9 +7,9 @@ import com.rodrigo.mynotes.data.model.NoteEntity
 
 @Database(
     entities = [NoteEntity::class],
-    version = 1
+    version = 2,
+    exportSchema = false
 )
 abstract class NoteDatabase: RoomDatabase() {
     abstract fun getNoteDao(): NoteDao
-
 }

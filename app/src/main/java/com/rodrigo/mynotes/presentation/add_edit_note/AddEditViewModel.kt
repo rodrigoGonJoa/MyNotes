@@ -1,10 +1,13 @@
 package com.rodrigo.mynotes.presentation.add_edit_note
 
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.rodrigo.mynotes.domain.model.Note
 import com.rodrigo.mynotes.domain.model.UiState
 import com.rodrigo.mynotes.domain.use_case.NoteUseCases
+import com.rodrigo.mynotes.util.StateType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,7 +30,7 @@ class AddEditViewModel @Inject constructor(
         getNoteIfExist(noteId)
     }
 
-    private fun getNoteIfExist(noteId: Long?) {
+    fun getNoteIfExist(noteId: Long?) {
         viewModelScope.launch {
             noteUseCases.getNoteById(noteId).collectLatest {uiState ->
                 _state.update {state ->
@@ -52,9 +55,40 @@ class AddEditViewModel @Inject constructor(
         }
     }
 
-    fun saveNote() {
+    fun saveNote(note: Note) {
         viewModelScope.launch {
-            noteUseCases.addNote(_state.value.note).collectLatest {uiState ->
+            noteUseCases.addNote(note).collectLatest {uiState ->
+                _state.update {state ->
+                    when (uiState) {
+                        is UiState.LoadingState -> state.copy(
+                            loading = uiState.loading
+                        )
+
+                        is UiState.ErrorState -> state.copy(
+                            notificationMessage = uiState.message,
+                            successfulAction = false
+                        )
+
+                        is UiState.SuccessState -> {
+                            state.copy(
+                                notificationMessage = uiState.message,
+                                successfulAction = true,
+                                note = if (uiState.type == StateType.Added) {
+                                    _state.value.note.copy(id = uiState.value as Long)
+                                } else {
+                                    _state.value.note
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fun deleteNote(note: Note) {
+        viewModelScope.launch {
+            noteUseCases.deleteNote(note).collectLatest {uiState ->
                 _state.update {state ->
                     when (uiState) {
                         is UiState.LoadingState -> state.copy(
@@ -76,27 +110,17 @@ class AddEditViewModel @Inject constructor(
         }
     }
 
-    fun deleteNote(noteId: Long?) {
-        viewModelScope.launch {
-            noteUseCases.deleteNote(noteId).collectLatest {uiState ->
-                _state.update {state ->
-                    when (uiState) {
-                        is UiState.LoadingState -> state.copy(
-                            loading = uiState.loading
-                        )
 
-                        is UiState.ErrorState -> state.copy(
-                            notificationMessage = uiState.message,
-                            successfulAction = false
-                        )
-
-                        is UiState.SuccessState -> state.copy(
-                            notificationMessage = uiState.message,
-                            successfulAction = true
-                        )
-                    }
-                }
-            }
-        }
+    fun saveSomeNotes() {
+        val noteList = listOf(
+            Note(title = "title1", content = "content1"),
+            Note(title = "title2", content = "content2"),
+            Note(title = "title3", content = "content3"),
+            Note(title = "title4", content = "content4"),
+        )
+        saveNote(noteList[0])
+        saveNote(noteList[1])
+        saveNote(noteList[3])
+        saveNote(noteList[2])
     }
 }

@@ -10,12 +10,29 @@ import com.rodrigo.mynotes.util.Constants
 data class NoteEntity(
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = Constants.NOTE_ID_COLNAME)
-    val noteId: Long = -1,
+    val noteId: Long?,
     @ColumnInfo(name = Constants.NOTE_TITLE_COLNAME)
     val noteTitle: String,
     @ColumnInfo(name = Constants.NOTE_CONTENT_COLNAME)
-    val noteContent: String,
-)
+    val noteContent: String
+){
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as NoteEntity
+
+        if (noteId != other.noteId) return false
+        if (noteTitle != other.noteTitle) return false
+        return noteContent == other.noteContent
+    }
+
+    override fun hashCode(): Int {
+        var result = noteTitle.hashCode()
+        result = 31 * result + noteContent.hashCode()
+        return result
+    }
+}
 
 fun NoteEntity.maptoDomain(): Note{
     return Note(id = noteId, title = noteTitle, content = noteContent)
