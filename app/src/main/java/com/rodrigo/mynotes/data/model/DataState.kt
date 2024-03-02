@@ -1,7 +1,7 @@
 package com.rodrigo.mynotes.data.model
 
 import com.rodrigo.mynotes.domain.model.UiState
-import com.rodrigo.mynotes.util.StateType
+import com.rodrigo.mynotes.utils.StateType
 
 sealed class DataState<out T> {
     data class SuccessState<T>(

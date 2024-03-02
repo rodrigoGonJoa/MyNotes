@@ -4,16 +4,16 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.rodrigo.mynotes.domain.model.Note
-import com.rodrigo.mynotes.util.Constants
+import com.rodrigo.mynotes.data.utils.DataConstants
 
-@Entity(tableName = Constants.NOTE_TABLE_NAME)
+@Entity(tableName = DataConstants.NOTE_TABLE_NAME)
 data class NoteEntity(
     @PrimaryKey(autoGenerate = true)
-    @ColumnInfo(name = Constants.NOTE_ID_COLNAME)
+    @ColumnInfo(name = DataConstants.NOTE_ID_COLNAME)
     val noteId: Long?,
-    @ColumnInfo(name = Constants.NOTE_TITLE_COLNAME)
+    @ColumnInfo(name = DataConstants.NOTE_TITLE_COLNAME)
     val noteTitle: String,
-    @ColumnInfo(name = Constants.NOTE_CONTENT_COLNAME)
+    @ColumnInfo(name = DataConstants.NOTE_CONTENT_COLNAME)
     val noteContent: String
 ){
     override fun equals(other: Any?): Boolean {

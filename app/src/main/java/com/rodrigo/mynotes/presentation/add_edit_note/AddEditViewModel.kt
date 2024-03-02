@@ -4,11 +4,14 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.rodrigo.mynotes.di.IoDispatcher
 import com.rodrigo.mynotes.domain.model.Note
 import com.rodrigo.mynotes.domain.model.UiState
 import com.rodrigo.mynotes.domain.use_case.NoteUseCases
-import com.rodrigo.mynotes.util.StateType
+import com.rodrigo.mynotes.utils.StateType
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -20,7 +23,8 @@ import javax.inject.Inject
 @HiltViewModel
 class AddEditViewModel @Inject constructor(
     private val noteUseCases: NoteUseCases,
-    savedStateHandle: SavedStateHandle
+    savedStateHandle: SavedStateHandle,
+    @IoDispatcher private val dispatcher: CoroutineDispatcher
 ): ViewModel() {
     private val noteId = savedStateHandle.get<Long>("noteId")
     private val _state = MutableStateFlow(AddEditState())
@@ -31,7 +35,7 @@ class AddEditViewModel @Inject constructor(
     }
 
     fun getNoteIfExist(noteId: Long?) {
-        viewModelScope.launch {
+        viewModelScope.launch(context = dispatcher) {
             noteUseCases.getNoteById(noteId).collectLatest {uiState ->
                 _state.update {state ->
                     when (uiState) {
@@ -56,27 +60,33 @@ class AddEditViewModel @Inject constructor(
     }
 
     fun saveNote(note: Note) {
-        viewModelScope.launch {
+        viewModelScope.launch(context = dispatcher) {
             noteUseCases.addNote(note).collectLatest {uiState ->
                 _state.update {state ->
-                    when (uiState) {
-                        is UiState.LoadingState -> state.copy(
-                            loading = uiState.loading
-                        )
 
-                        is UiState.ErrorState -> state.copy(
-                            notificationMessage = uiState.message,
-                            successfulAction = false
-                        )
+                    when (uiState) {
+                        is UiState.LoadingState -> {
+
+                            state.copy(
+                                loading = uiState.loading
+                            )
+                        }
+
+                        is UiState.ErrorState -> {
+                            state.copy(
+                                notificationMessage = uiState.message,
+                                successfulAction = false
+                            )
+                        }
 
                         is UiState.SuccessState -> {
                             state.copy(
                                 notificationMessage = uiState.message,
                                 successfulAction = true,
-                                note = if (uiState.type == StateType.Added) {
-                                    _state.value.note.copy(id = uiState.value as Long)
+                                note = if (uiState.type == StateType.Add) {
+                                    note.copy(id = uiState.value as Long)
                                 } else {
-                                    _state.value.note
+                                    note
                                 }
                             )
                         }
@@ -87,7 +97,7 @@ class AddEditViewModel @Inject constructor(
     }
 
     fun deleteNote(note: Note) {
-        viewModelScope.launch {
+        viewModelScope.launch(context = dispatcher) {
             noteUseCases.deleteNote(note).collectLatest {uiState ->
                 _state.update {state ->
                     when (uiState) {
@@ -102,7 +112,8 @@ class AddEditViewModel @Inject constructor(
 
                         is UiState.SuccessState -> state.copy(
                             notificationMessage = uiState.message,
-                            successfulAction = true
+                            successfulAction = true,
+                            note = Note()
                         )
                     }
                 }

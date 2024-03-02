@@ -1,6 +1,6 @@
-package com.rodrigo.mynotes.util
+package com.rodrigo.mynotes.data.utils
 
-object Constants {
+object DataConstants {
     const val DATABASE_NAME = "note_database"
     const val NOTE_TABLE_NAME = "note_table"
     const val NOTE_ID_COLNAME= "note_id"

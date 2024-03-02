@@ -1,7 +1,7 @@
 package com.rodrigo.mynotes.domain.model
 
 import com.rodrigo.mynotes.data.model.DataState
-import com.rodrigo.mynotes.util.StateType
+import com.rodrigo.mynotes.utils.StateType
 
 sealed class UiState<out T> {
     data class LoadingState<T>(val loading: Boolean): UiState<T>()

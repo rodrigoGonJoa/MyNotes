@@ -7,14 +7,15 @@ import com.rodrigo.mynotes.domain.model.InvalidNoteException
 import com.rodrigo.mynotes.domain.model.Note
 import com.rodrigo.mynotes.domain.model.maptoEntity
 import com.rodrigo.mynotes.domain.repository.NoteRepository
-import com.rodrigo.mynotes.util.StateType
+import com.rodrigo.mynotes.utils.StateType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 
 class NoteRepositoryImpl @Inject constructor(
-    private val noteDao: NoteDao
+    private val noteDao: NoteDao,
+    private val transactionProvider: TransactionProvider
 ): NoteRepository {
     override suspend fun addNote(note: Note): DataState<Long> {
         return try {
@@ -23,43 +24,61 @@ class NoteRepositoryImpl @Inject constructor(
                 throw InvalidNoteException("Ha habido un error al añadir la nota.")
             }
             DataState.SuccessState(
-                type = StateType.Added, value = noteId,
+                type = StateType.Add, value = noteId,
                 message = "La nota se ha añadido correctamente."
             )
         } catch (ex: Exception) {
             DataState.ErrorState(
-                type = StateType.Added, message = ex.message ?: ex.stackTraceToString(), cause = ex
+                type = StateType.Add, message = ex.message ?: ex.stackTraceToString(), cause = ex
             )
         }
     }
 
     override suspend fun updateNote(note: Note): DataState<Unit> {
-         return try {
-            val oldNote = noteDao.getNoteWithCheck(note.maptoEntity().noteId!!)
-            val rowsUpdated = noteDao.updateNote(note.maptoEntity())
+        return try {
+            transactionProvider.runAsTransaction {
+                val newNote = noteDao.getNoteById(note.maptoEntity().noteId!!)
+                    ?: throw NullPointerException("No se pudo encontrar la nota para actualizar.")
 
-            if (rowsUpdated != 1) {
-                throw InvalidNoteException("Ha habido un error al editar la nota.")
-            }
-            if (oldNote == note.maptoEntity()) {
+                if (noteDao.updateNote(note.maptoEntity()) != 1) {
+                    throw InvalidNoteException("Ha ocurrido un error al actualizar la nota.")
+                }
+
                 DataState.SuccessState(
-                    type = StateType.Updated, value = Unit,
-                    message = "No ha habido ningun cambio en la nota."
-                )
-            }else {
-                DataState.SuccessState(
-                    type = StateType.Updated, value = Unit,
-                    message = "La nota se ha editado correctamente."
+                    type = StateType.Update,
+                    value = Unit,
+                    message = if (newNote == note.maptoEntity()) {
+                        "La nota no ha sido modificada."
+                    } else {
+                        "La nota se ha actualizado correctamente."
+                    }
                 )
             }
         } catch (ex: Exception) {
-             DataState.ErrorState(
-                type = StateType.Updated, message = ex.message ?: ex.stackTraceToString(),
+            DataState.ErrorState(
+                type = StateType.Update,
+                message = ex.message ?: ex.stackTraceToString(),
                 cause = ex
             )
         }
     }
 
+    override suspend fun getNoteById(idNote: Long): DataState<Note> {
+        return try {
+            val note = noteDao.getNoteById(idNote)?.maptoDomain()
+                ?: throw NullPointerException("No se pudo encontrar la nota.")
+
+            DataState.SuccessState(
+                type = StateType.Obtain, value = note,
+                message = "La nota se ha obtenido correctamente."
+            )
+        } catch (ex: Exception) {
+            DataState.ErrorState(
+                type = StateType.Obtain,
+                message = ex.message ?: ex.stackTraceToString(), cause = ex
+            )
+        }
+    }
 
     override suspend fun deleteNote(note: Note): DataState<Unit> {
         return try {
@@ -68,27 +87,12 @@ class NoteRepositoryImpl @Inject constructor(
                 throw InvalidNoteException("Ha habido un error al eliminar la nota.")
             }
             DataState.SuccessState(
-                type = StateType.Deleted, value = Unit,
+                type = StateType.Delete, value = Unit,
                 message = "La nota se ha eliminado correctamente."
             )
         } catch (ex: Exception) {
             DataState.ErrorState(
-                type = StateType.Deleted,
-                message = ex.message ?: ex.stackTraceToString(), cause = ex
-            )
-        }
-    }
-
-    override suspend fun getNoteById(idNote: Long): DataState<Note> {
-        return try {
-            val note = noteDao.getNoteWithCheck(idNote).maptoDomain()
-            DataState.SuccessState(
-                type = StateType.Obtained, value = note,
-                message = "La nota se ha obtenido correctamente."
-            )
-        } catch (ex: Exception) {
-            DataState.ErrorState(
-                type = StateType.Obtained,
+                type = StateType.Delete,
                 message = ex.message ?: ex.stackTraceToString(), cause = ex
             )
         }
@@ -101,7 +105,7 @@ class NoteRepositoryImpl @Inject constructor(
         return try {
             noteEntityFlow.map {noteEntityList ->
                 DataState.SuccessState(
-                    type = StateType.Obtained, value = noteEntityList.map {noteEntity ->
+                    type = StateType.Obtain, value = noteEntityList.map {noteEntity ->
                         noteEntity.maptoDomain()
                     },
                     message = "La lista de notas se ha obtenido correctamente"
@@ -110,7 +114,7 @@ class NoteRepositoryImpl @Inject constructor(
         } catch (ex: Exception) {
             noteEntityFlow.map {_ ->
                 DataState.ErrorState(
-                    type = StateType.Obtained,
+                    type = StateType.Obtain,
                     message = ex.message ?: ex.stackTraceToString(), cause = ex
                 )
             }
