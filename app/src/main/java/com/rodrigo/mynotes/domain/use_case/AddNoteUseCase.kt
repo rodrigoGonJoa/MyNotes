@@ -51,11 +51,7 @@ class AddNoteUseCase @Inject constructor(
 
         when (result) {
             is DataState.ErrorState -> flowCollector.emit(result.toUiState())
-
-            is DataState.SuccessState -> {
-                Log.d("addnoteUseCase", result.type.toString())
-                flowCollector.emit(result.toUiState())
-            }
+            is DataState.SuccessState -> flowCollector.emit(result.toUiState())
         }
     }
 }

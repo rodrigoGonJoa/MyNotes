@@ -7,6 +7,7 @@ import com.rodrigo.mynotes.domain.model.Note
 import com.rodrigo.mynotes.domain.model.UiState
 import com.rodrigo.mynotes.domain.repository.NoteRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
@@ -20,13 +21,22 @@ class GetNotesUseCase @Inject constructor(
     operator fun invoke(): Flow<UiState<List<Note>>> {
         return flow {
             emit(UiState.LoadingState(true))
-            noteRepository.getNotes().collect {dataState ->
-                when (dataState) {
-                    is DataState.ErrorState -> emit(dataState.toUiState())
-                    is DataState.SuccessState -> emit(dataState.toUiState())
-                }
+            handleRepositoryResult(flowCollector = this, emitLoadingFalse = {
                 emit(UiState.LoadingState(false))
+            })
+        }
+    }
+
+    private suspend fun handleRepositoryResult(
+        flowCollector: FlowCollector<UiState<List<Note>>>,
+        emitLoadingFalse: suspend () -> Unit
+    ) {
+        noteRepository.getNotes().collect {dataState ->
+            when (dataState) {
+                is DataState.ErrorState -> flowCollector.emit(dataState.toUiState())
+                is DataState.SuccessState -> flowCollector.emit(dataState.toUiState())
             }
+            emitLoadingFalse.invoke()
         }
     }
 }
