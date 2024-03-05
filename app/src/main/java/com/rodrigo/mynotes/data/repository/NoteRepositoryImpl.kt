@@ -1,5 +1,6 @@
 package com.rodrigo.mynotes.data.repository
 
+import android.util.Log
 import com.rodrigo.mynotes.data.dao.NoteDao
 import com.rodrigo.mynotes.data.model.DataState
 import com.rodrigo.mynotes.data.model.maptoDomain
@@ -9,7 +10,11 @@ import com.rodrigo.mynotes.domain.model.maptoEntity
 import com.rodrigo.mynotes.domain.repository.NoteRepository
 import com.rodrigo.mynotes.utils.StateType
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flatMapConcat
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.take
 import javax.inject.Inject
 
 
@@ -98,28 +103,21 @@ class NoteRepositoryImpl @Inject constructor(
         }
     }
 
-    // No esta claro que ocurre cuando se bifurca un flujo, suponiendo que es este caso.
-    // Probar en la aplicion y entualmente buscar mas informaciona acerca de esto
     override fun getNotes(): Flow<DataState<List<Note>>> {
-        val noteEntityFlow = noteDao.getNotes()
-        return try {
-            noteEntityFlow.map {noteEntityList ->
-                DataState.SuccessState(
-                    type = StateType.Obtain, value = noteEntityList.map {noteEntity ->
-                        noteEntity.maptoDomain()
-                    },
-                    message = "La lista de notas se ha obtenido correctamente"
-                )
-            }
-        } catch (ex: Exception) {
-            noteEntityFlow.map {_ ->
-                DataState.ErrorState(
-                    type = StateType.Obtain,
-                    message = ex.message ?: ex.stackTraceToString(), cause = ex
-                )
-            }
+        return noteDao.getNotes().map {noteEntityList ->
+            DataState.SuccessState(
+                type = StateType.Obtain, value = noteEntityList.map {noteEntity ->
+                    noteEntity.maptoDomain()
+                }, message = "La lista de notas se ha obtenido correctamente"
+            )
+        }.catch {ex ->
+            DataState.ErrorState(
+                type = StateType.Obtain,
+                message = ex.message ?: ex.stackTraceToString(), cause = ex as Exception
+            )
         }
     }
+
 
     companion object {
         const val TAG = "NoteRepositoryImpl"
