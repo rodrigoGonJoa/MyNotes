@@ -9,6 +9,7 @@ import androidx.room.Transaction
 import androidx.room.Update
 import com.rodrigo.mynotes.data.model.NoteEntity
 import com.rodrigo.mynotes.data.utils.DataConstants
+import com.rodrigo.mynotes.domain.model.InvalidNoteException
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -32,8 +33,8 @@ interface NoteDao {
     )
     suspend fun getNoteById(noteId: Long): NoteEntity?
 
-    @Delete
-    suspend fun deleteNote(noteEntity: NoteEntity): Int
+    @Query("DELETE FROM ${DataConstants.NOTE_TABLE_NAME} WHERE ${DataConstants.NOTE_ID_COLNAME} = :noteId")
+    suspend fun deleteNote(noteId: Long): Int
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertNote(noteEntity: NoteEntity): Long

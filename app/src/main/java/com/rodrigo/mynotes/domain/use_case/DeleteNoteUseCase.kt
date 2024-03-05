@@ -2,7 +2,6 @@ package com.rodrigo.mynotes.domain.use_case
 
 import com.rodrigo.mynotes.data.model.DataState
 import com.rodrigo.mynotes.data.model.toUiState
-import com.rodrigo.mynotes.domain.model.Note
 import com.rodrigo.mynotes.domain.model.UiState
 import com.rodrigo.mynotes.domain.repository.NoteRepository
 import kotlinx.coroutines.flow.Flow
@@ -13,36 +12,30 @@ import javax.inject.Inject
 class DeleteNoteUseCase @Inject constructor(
     private val noteRepository: NoteRepository
 ) {
-    operator fun invoke(note: Note?): Flow<UiState<Unit>> {
+    operator fun invoke(idNote: Long): Flow<UiState<Unit>> {
         return flow {
             emit(UiState.LoadingState(true))
-            if (handleDomainRules(note = note, flowCollector = this)) {
-                handleRepositoryResult(note = note, flowCollector = this)
+            if(handleDomainRules(noteId = idNote, flowCollector = this)){
+                noteRepository.deleteNote(idNote).also {result ->
+                    when (result) {
+                        is DataState.ErrorState -> emit(result.toUiState())
+                        is DataState.SuccessState -> emit(result.toUiState())
+                    }
+                    emit(UiState.LoadingState(false))
+                }
             }
-            emit(UiState.LoadingState(false))
+
         }
     }
 
     private suspend fun handleDomainRules(
-        note: Note?,
+        noteId: Long?,
         flowCollector: FlowCollector<UiState<Unit>>
     ): Boolean {
-        if (note == null) {
+        if (noteId == null) {
             flowCollector.emit(UiState.ErrorState("El id de la nota es nulo."))
             return false
         }
         return true
-    }
-
-    private suspend fun handleRepositoryResult(
-        note: Note?,
-        flowCollector: FlowCollector<UiState<Unit>>
-    ) {
-        note?.let {
-            when (val result = noteRepository.deleteNote(note)) {
-                is DataState.ErrorState -> flowCollector.emit(result.toUiState())
-                is DataState.SuccessState -> flowCollector.emit(result.toUiState())
-            }
-        }
     }
 }

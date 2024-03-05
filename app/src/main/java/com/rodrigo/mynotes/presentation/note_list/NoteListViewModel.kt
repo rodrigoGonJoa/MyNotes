@@ -30,7 +30,7 @@ class NoteListViewModel @Inject constructor(
     }
 
     fun getNotes() {
-        viewModelScope.launch {
+        viewModelScope.launch(context = dispatcher) {
             noteUseCases.getNotes().collectLatest {uiState ->
                 _state.update {state ->
                     when (uiState) {
@@ -41,14 +41,12 @@ class NoteListViewModel @Inject constructor(
 
                         is UiState.ErrorState ->
                             state.copy(
-                                notificationMessage = uiState.message,
                                 successfulAction = false
                             )
 
                         is UiState.SuccessState ->
                             state.copy(
                                 notes = uiState.value,
-                                notificationMessage = uiState.message,
                                 successfulAction = true
                             )
                     }
@@ -57,9 +55,9 @@ class NoteListViewModel @Inject constructor(
         }
     }
 
-    fun deleteNote(note: Note) {
+    fun deleteNote(idNote: Long) {
         viewModelScope.launch(context = dispatcher) {
-            noteUseCases.deleteNote(note).collectLatest {uiState ->
+            noteUseCases.deleteNote(idNote).collectLatest {uiState ->
                 _state.update {state ->
                     when (uiState) {
                         is UiState.LoadingState -> state.copy(

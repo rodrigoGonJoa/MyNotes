@@ -47,7 +47,7 @@ fun AddEditScreen(
                 Text(text = "Save a note")
             }
             Button(onClick = {viewmodel.getNoteIfExist(state.note.id)}) {Text(text = "Get a note")}
-            Button(onClick = {viewmodel.deleteNote(state.note)}) {Text(text = "Delete a note")}
+            Button(onClick = {viewmodel.deleteNote(state.note.id)}) {Text(text = "Delete a note")}
             Text(text = message)
             Text(text = note.toString())
         }
@@ -68,8 +68,6 @@ fun AddEditScreen(
        tanto en el caso de editar como en el de obtener laa nota al refrescar, devolver por ahora un
        mensaje de no ha habido ningun cambio. lo que he hecho hasta ahora es mediante la propia nota
        comprobar si la nota en base de datos es igual con un compareTo*/
-
-    // todo: establecer el flujo de datos desde base de datso hasta el viewmodel de Note List
 
 
 }

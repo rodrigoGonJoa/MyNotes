@@ -96,25 +96,27 @@ class AddEditViewModel @Inject constructor(
         }
     }
 
-    fun deleteNote(note: Note) {
+    fun deleteNote(noteId: Long?) {
         viewModelScope.launch(context = dispatcher) {
-            noteUseCases.deleteNote(note).collectLatest {uiState ->
-                _state.update {state ->
-                    when (uiState) {
-                        is UiState.LoadingState -> state.copy(
-                            loading = uiState.loading
-                        )
+            noteId?.let {id ->
+                noteUseCases.deleteNote(id).collectLatest {uiState ->
+                    _state.update {state ->
+                        when (uiState) {
+                            is UiState.LoadingState -> state.copy(
+                                loading = uiState.loading
+                            )
 
-                        is UiState.ErrorState -> state.copy(
-                            notificationMessage = uiState.message,
-                            successfulAction = false
-                        )
+                            is UiState.ErrorState -> state.copy(
+                                notificationMessage = uiState.message,
+                                successfulAction = false
+                            )
 
-                        is UiState.SuccessState -> state.copy(
-                            notificationMessage = uiState.message,
-                            successfulAction = true,
-                            note = Note()
-                        )
+                            is UiState.SuccessState -> state.copy(
+                                notificationMessage = uiState.message,
+                                successfulAction = true,
+                                note = Note()
+                            )
+                        }
                     }
                 }
             }

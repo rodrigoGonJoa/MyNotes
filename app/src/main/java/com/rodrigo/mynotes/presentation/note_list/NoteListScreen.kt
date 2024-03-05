@@ -42,14 +42,10 @@ fun NoteListScreen(
             Button(onClick = {viewmodel.getNotes()}) {
                 Text(text = "Get Notes")
             }
-            Button(onClick = {viewmodel.deleteNote(state.notes[4])}) {
+            Button(onClick = {viewmodel.deleteNote(29L)}) {
                 Text(text = "Delete note 5")
             }
             Text(text = "notes = ${state.notesToString()}")
         }
     }
-
-
-
-
 }

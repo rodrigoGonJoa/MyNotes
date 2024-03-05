@@ -85,16 +85,17 @@ class NoteRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun deleteNote(note: Note): DataState<Unit> {
+    override suspend fun deleteNote(noteId: Long): DataState<Unit> {
         return try {
-            val rowsAffected = noteDao.deleteNote(note.maptoEntity())
-            if (rowsAffected != 1) {
-                throw InvalidNoteException("Ha habido un error al eliminar la nota.")
+            transactionProvider.runAsTransaction {
+                if (noteDao.deleteNote(noteId) != 1) {
+                    throw InvalidNoteException("Ha habido un error al eliminar la nota.")
+                }
+                DataState.SuccessState(
+                    type = StateType.Delete, value = Unit,
+                    message = "La nota se ha eliminado correctamente."
+                )
             }
-            DataState.SuccessState(
-                type = StateType.Delete, value = Unit,
-                message = "La nota se ha eliminado correctamente."
-            )
         } catch (ex: Exception) {
             DataState.ErrorState(
                 type = StateType.Delete,
