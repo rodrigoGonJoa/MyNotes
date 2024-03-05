@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.rodrigo.mynotes.presentation.add_edit_note.AddEditScreen
+import com.rodrigo.mynotes.presentation.composables.LazyColumnComponent
 import com.rodrigo.mynotes.presentation.note_list.NoteListScreen
 import com.rodrigo.mynotes.ui.theme.MyNotesTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -21,7 +22,7 @@ class MainActivity: ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MyNotesTheme {
-                NoteListScreen()
+                LazyColumnComponent()
             }
         }
     }
