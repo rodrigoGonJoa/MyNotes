@@ -6,7 +6,7 @@ data class Note(
     val id: Long? = null,
     val title: String = "",
     val content: String = ""
-){
+) {
 
     override fun toString(): String {
         return "Note(id=$id, title='$title', content='$content')"
@@ -28,8 +28,12 @@ data class Note(
         result = 31 * result + content.hashCode()
         return result
     }
+
+    companion object {
+        val default = Note(id = null, title = "Title", content = "Content")
+    }
 }
 
-fun Note.maptoEntity(): NoteEntity{
+fun Note.maptoEntity(): NoteEntity {
     return NoteEntity(noteId = id, noteTitle = title, noteContent = content)
 }

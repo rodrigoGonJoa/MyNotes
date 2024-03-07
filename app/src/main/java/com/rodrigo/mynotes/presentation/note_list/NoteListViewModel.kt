@@ -11,6 +11,7 @@ import com.rodrigo.mynotes.domain.use_case.NoteUseCases
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
@@ -22,57 +23,60 @@ class NoteListViewModel @Inject constructor(
     private val noteUseCases: NoteUseCases,
     @IoDispatcher private val dispatcher: CoroutineDispatcher
 ): ViewModel() {
-    private val _state = MutableStateFlow(NoteListState())
-    val state = _state.asStateFlow()
+
+    private val _notes = MutableStateFlow(emptyList<Note>())
+    val notes = _notes.asStateFlow()
+
+    private val _notificationMessage = MutableStateFlow("")
+    val notificationMessage = _notificationMessage.asStateFlow()
+
+    private val _loading = MutableStateFlow(false)
+    val loading = _loading.asStateFlow()
+
+    private val _successfulAction = MutableStateFlow(false)
+    val successfulAction = _successfulAction.asStateFlow()
 
     init {
         getNotes()
     }
 
-    fun getNotes() {
+    fun onEvent(event: NoteListEvent){
+        when(event){
+            is NoteListEvent.deleteNote -> {
+                deleteNote(event.idNote)
+            }
+        }
+    }
+
+    private fun getNotes() {
         viewModelScope.launch(context = dispatcher) {
             noteUseCases.getNotes().collectLatest {uiState ->
-                _state.update {state ->
-                    when (uiState) {
-                        is UiState.LoadingState ->
-                            state.copy(
-                                loading = uiState.loading
-                            )
-
-                        is UiState.ErrorState ->
-                            state.copy(
-                                successfulAction = false
-                            )
-
-                        is UiState.SuccessState ->
-                            state.copy(
-                                notes = uiState.value,
-                                successfulAction = true
-                            )
+                when (uiState) {
+                    is UiState.LoadingState -> _loading.value = uiState.loading
+                    is UiState.ErrorState -> _successfulAction.value = false
+                    is UiState.SuccessState -> {
+                        _notes.value = uiState.value
+                        _successfulAction.value = true
                     }
                 }
             }
         }
     }
 
-    fun deleteNote(idNote: Long) {
+
+    fun deleteNote(idNote: Long?) {
         viewModelScope.launch(context = dispatcher) {
             noteUseCases.deleteNote(idNote).collectLatest {uiState ->
-                _state.update {state ->
-                    when (uiState) {
-                        is UiState.LoadingState -> state.copy(
-                            loading = uiState.loading
-                        )
+                when (uiState) {
+                    is UiState.LoadingState -> _loading.value = uiState.loading
+                    is UiState.ErrorState -> {
+                        _notificationMessage.value = uiState.message
+                        _successfulAction.value = false
+                    }
 
-                        is UiState.ErrorState -> state.copy(
-                            notificationMessage = uiState.message,
-                            successfulAction = false
-                        )
-
-                        is UiState.SuccessState -> state.copy(
-                            notificationMessage = uiState.message,
-                            successfulAction = true
-                        )
+                    is UiState.SuccessState -> {
+                        _notificationMessage.value = uiState.message
+                        _successfulAction.value = true
                     }
                 }
             }

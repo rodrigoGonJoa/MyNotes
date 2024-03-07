@@ -13,11 +13,11 @@ import javax.inject.Inject
 class DeleteNoteUseCase @Inject constructor(
     private val noteRepository: NoteRepository
 ) {
-    operator fun invoke(idNote: Long): Flow<UiState<Unit>> {
+    operator fun invoke(idNote: Long?): Flow<UiState<Unit>> {
         return flow {
             emit(UiState.LoadingState(true))
             if (handleDomainRules(noteId = idNote, flowCollector = this)) {
-                handleRepositoryResult(noteId = idNote, flowCollector = this)
+                handleRepositoryResult(noteId = idNote!!, flowCollector = this)
             }
             emit(UiState.LoadingState(false))
         }
