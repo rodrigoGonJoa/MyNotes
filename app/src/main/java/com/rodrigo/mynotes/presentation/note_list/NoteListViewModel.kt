@@ -24,65 +24,70 @@ class NoteListViewModel @Inject constructor(
     @IoDispatcher private val dispatcher: CoroutineDispatcher
 ): ViewModel() {
 
-    private val _notes = MutableStateFlow(emptyList<Note>())
-    val notes = _notes.asStateFlow()
-
-    private val _notificationMessage = MutableStateFlow("")
-    val notificationMessage = _notificationMessage.asStateFlow()
-
-    private val _loading = MutableStateFlow(false)
-    val loading = _loading.asStateFlow()
-
-    private val _successfulAction = MutableStateFlow(false)
-    val successfulAction = _successfulAction.asStateFlow()
+    private val _state = MutableStateFlow(NoteListState())
+    val state = _state.asStateFlow()
 
     init {
         getNotes()
     }
 
-    fun onEvent(event: NoteListEvent){
-        when(event){
+    fun onEvent(event: NoteListEvent) {
+        when (event) {
             is NoteListEvent.deleteNote -> {
                 deleteNote(event.idNote)
             }
         }
     }
 
-    private fun getNotes() {
+    fun getNotes() {
         viewModelScope.launch(context = dispatcher) {
             noteUseCases.getNotes().collectLatest {uiState ->
-                when (uiState) {
-                    is UiState.LoadingState -> _loading.value = uiState.loading
-                    is UiState.ErrorState -> _successfulAction.value = false
-                    is UiState.SuccessState -> {
-                        _notes.value = uiState.value
-                        _successfulAction.value = true
+                _state.update {state ->
+                    when (uiState) {
+                        is UiState.LoadingState ->
+                            state.copy(
+                                loading = uiState.loading
+                            )
+
+                        is UiState.ErrorState ->
+                            state.copy(
+                                successfulAction = false
+                            )
+
+                        is UiState.SuccessState ->
+                            state.copy(
+                                notes = uiState.value,
+                                successfulAction = true
+                            )
                     }
                 }
             }
         }
     }
-
 
     fun deleteNote(idNote: Long?) {
         viewModelScope.launch(context = dispatcher) {
             noteUseCases.deleteNote(idNote).collectLatest {uiState ->
-                when (uiState) {
-                    is UiState.LoadingState -> _loading.value = uiState.loading
-                    is UiState.ErrorState -> {
-                        _notificationMessage.value = uiState.message
-                        _successfulAction.value = false
-                    }
+                _state.update {state ->
+                    when (uiState) {
+                        is UiState.LoadingState -> state.copy(
+                            loading = uiState.loading
+                        )
 
-                    is UiState.SuccessState -> {
-                        _notificationMessage.value = uiState.message
-                        _successfulAction.value = true
+                        is UiState.ErrorState -> state.copy(
+                            notificationMessage = uiState.message,
+                            successfulAction = false
+                        )
+
+                        is UiState.SuccessState -> state.copy(
+                            notificationMessage = uiState.message,
+                            successfulAction = true
+                        )
                     }
                 }
             }
         }
     }
-
     companion object {
         const val LOG = "notelistviewmodel"
     }
