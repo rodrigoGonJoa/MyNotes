@@ -66,7 +66,8 @@ android {
 }
 
 dependencies {
-testImplementation("org.testng:testng:6.9.6")
+    implementation("androidx.compose.foundation:foundation:1.7.0-alpha04")
+    testImplementation("org.testng:testng:6.9.6")
     //    detekt -p detekt-compose-<VERSION>-all.jar -c your/config/detekt.yml
 //    detekt -p "C:\Program Files\Java\Resources\detekt-compose-0.3.11-all.jar" -c "config/detekt/detekt.yml"
     detektPlugins(libs.detekt.compose)
@@ -138,4 +139,5 @@ testImplementation("org.testng:testng:6.9.6")
 
     testImplementation("org.mockito:mockito-core:3.12.4")
     testImplementation("org.mockito.kotlin:mockito-kotlin:3.2.0")
+    implementation("com.google.accompanist:accompanist-insets:0.30.1")
 }
