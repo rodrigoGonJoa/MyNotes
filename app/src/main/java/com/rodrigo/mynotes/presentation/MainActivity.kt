@@ -4,8 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.rodrigo.mynotes.presentation.composables.NoteComposable
-import com.rodrigo.mynotes.presentation.composables.TestTextField
+import com.rodrigo.mynotes.presentation.add_edit_note.AddEditScreen
 import com.rodrigo.mynotes.ui.theme.MyNotesTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -17,8 +16,8 @@ class MainActivity: ComponentActivity() {
         setContent {
             MyNotesTheme {
                 //NoteListScreen(navigateToNote = {})
-                TestTextField()
                 //TestTextField()
+                AddEditScreen(onClickBack = {})
             }
         }
     }
