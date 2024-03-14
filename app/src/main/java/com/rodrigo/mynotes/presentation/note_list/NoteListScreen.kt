@@ -39,7 +39,7 @@ import com.rodrigo.mynotes.domain.model.Note
 @Composable
 fun NoteListScreen(
     viewModel: NoteListViewModel = hiltViewModel(),
-    navigateToNote: (Long?) -> Unit
+    navigateToNote: (Long) -> Unit
 ) {
     val state by viewModel.state.collectAsState()
     val notificationMessage = state.notificationMessage
@@ -61,7 +61,7 @@ fun NoteListScreen(
                 .fillMaxSize()
                 .padding(8.dp),
             floatingActionButton = {
-                FloatingActionButton(onClick = {navigateToNote(null)}) {
+                FloatingActionButton(onClick = {navigateToNote(-1L)}) {
                     Icon(imageVector = Icons.Default.Add, contentDescription = "Add")
                 }
             },
@@ -76,7 +76,7 @@ fun NoteListScreen(
 private fun NoteList(
     state: NoteListState,
     innerPadding: PaddingValues,
-    navigateToNote: (Long?) -> Unit
+    navigateToNote: (Long) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -85,7 +85,7 @@ private fun NoteList(
         userScrollEnabled = true
     ) {
         items(state.notes) {note ->
-            NoteItemComposable(note = note, onClickNote = {navigateToNote(note.id)})
+            NoteItemComposable(note = note, onClickNote = {navigateToNote(note.id!!)})
         }
     }
 
@@ -96,7 +96,6 @@ private fun NoteList(
 
 @Composable
 fun NoteItemComposable(note: Note, onClickNote: () -> Unit) {
-
     Card(
         modifier = Modifier
             .fillMaxWidth()

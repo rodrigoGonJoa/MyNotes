@@ -1,10 +1,7 @@
 package com.rodrigo.mynotes.presentation.add_edit_note
 
-import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.text.input.TextFieldState
-import androidx.compose.foundation.text.input.setTextAndSelectAll
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rodrigo.mynotes.di.IoDispatcher
@@ -26,40 +23,49 @@ import javax.inject.Inject
 @OptIn(ExperimentalFoundationApi::class)
 class AddEditViewModel @Inject constructor(
     private val noteUseCases: NoteUseCases,
-    savedStateHandle: SavedStateHandle,
     @IoDispatcher private val dispatcher: CoroutineDispatcher
 ): ViewModel() {
-    private val noteIdfromNoteList = savedStateHandle.get<Long>("noteId")
 
     val titleState = TextFieldState(initialText = "")
     val contentState = TextFieldState(initialText = "")
 
     private val _noteId = MutableStateFlow<Long?>(value = null)
+    val noteId = _noteId.asStateFlow()
+    fun setNoteId(noteId: Long?) {
+        if(noteId != -1L) {
+            _noteId.update {noteId}
+        }
+    }
 
     private val _notificationMessage = MutableStateFlow(value = "")
     val notificationMessage = _notificationMessage.asStateFlow()
 
-    private val _actionPerformed = MutableStateFlow(value = false)
-    val actionPerformed = _actionPerformed.asStateFlow()
+    private val _actionPerformedToggle = MutableStateFlow(value = false)
+    val actionPerformedToggle = _actionPerformedToggle.asStateFlow()
+    private fun changeActionPerformedToggle(){
+        _actionPerformedToggle.update {!_actionPerformedToggle.value}
+    }
 
-    private val _successfulAction = MutableStateFlow(value = true)
+    private val _successfulAction = MutableStateFlow(value = false)
     val successfulAction = _successfulAction.asStateFlow()
 
     private val _loading = MutableStateFlow(value = true)
     val loading = _loading.asStateFlow()
 
-    fun onEvent(event: AddEditEvents){
-        when(event){
-            AddEditEvents.AddNote -> {
+    fun onEvent(event: AddEditEvents) {
+        when (event) {
+            AddEditEvents.OnAddNote -> {
                 saveNote()
-                _actionPerformed.value = !_actionPerformed.value
+                changeActionPerformedToggle()
             }
-            AddEditEvents.DeleteNote -> {
-                deleteNote(_noteId.value)
-                _actionPerformed.value = !_actionPerformed.value
+
+            AddEditEvents.OnDeleteNote -> {
+                deleteNote()
+                changeActionPerformedToggle()
             }
-            AddEditEvents.GetNote -> {
-                getNoteIfExist(6)
+
+            AddEditEvents.OnGetNote -> {
+                getNoteIfExist(_noteId.value)
             }
         }
     }
@@ -115,7 +121,6 @@ class AddEditViewModel @Inject constructor(
                         _successfulAction.update {true}
                         if (uiState.type == StateType.Add) {
                             _noteId.update {uiState.value as Long}
-                            Log.d("SuccessState", uiState.value.toString())
                         }
                     }
                 }
@@ -124,9 +129,9 @@ class AddEditViewModel @Inject constructor(
     }
 
 
-    private fun deleteNote(noteId: Long?) {
+    private fun deleteNote() {
         viewModelScope.launch(context = dispatcher) {
-            noteId?.let {id ->
+            noteId.value?.let {id ->
                 noteUseCases.deleteNote(id).collectLatest {uiState ->
                     when (uiState) {
                         is UiState.LoadingState -> _loading.update {uiState.loading}

@@ -1,8 +1,6 @@
 package com.rodrigo.mynotes.presentation.add_edit_note
 
-import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.EnterTransition
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -20,12 +18,10 @@ import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.ExposedDropdownMenuDefaults.textFieldColors
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -51,24 +47,19 @@ import com.rodrigo.mynotes.presentation.composables.hideSoftKeyboardOnClick
 @Composable
 fun AddEditScreen(
     viewModel: AddEditViewModel = hiltViewModel(),
-    onClickBack: () -> Unit
+    onClickBack: () -> Unit,
+    noteIdFromNoteList: Long? = -1L
 ) {
-    val firstRecomposition = remember {true}
-    val contentState = viewModel.contentState
-    val titleState = viewModel.titleState
-    val loading = viewModel.loading.collectAsState()
-    val notificationMessage = viewModel.notificationMessage.collectAsState()
-    val actionPerformed = viewModel.actionPerformed.collectAsState()
-    val successfulAction = viewModel.successfulAction.collectAsState()
+    viewModel.setNoteId(noteIdFromNoteList)
+
     val snackbarHostState = remember {SnackbarHostState()}
 
-
-    LaunchedEffect(actionPerformed.value) {
-        snackbarHostState.showSnackbar(notificationMessage.value)
+    LaunchedEffect(viewModel.actionPerformedToggle.collectAsState().value) {
+        snackbarHostState.showSnackbar(viewModel.notificationMessage.value)
     }
 
-    LaunchedEffect(firstRecomposition) {
-        viewModel.onEvent(AddEditEvents.GetNote)
+    LaunchedEffect(remember {true}) {
+        viewModel.onEvent(AddEditEvents.OnGetNote)
     }
 
     Scaffold(
@@ -77,19 +68,18 @@ fun AddEditScreen(
             .hideSoftKeyboardOnClick(),
         topBar = {
             ScaffoldTopBar(
-                isLoading = loading.value,
-                onAdd = {viewModel.onEvent(AddEditEvents.AddNote)},
-                onDelete = {viewModel.onEvent(AddEditEvents.DeleteNote)},
+                isLoading = viewModel.loading.collectAsState().value,
                 onClickBack = onClickBack,
-                successfulAction = successfulAction.value
+                onDelete = {viewModel.onEvent(AddEditEvents.OnDeleteNote)},
+                onAdd = {viewModel.onEvent(AddEditEvents.OnAddNote)}
             )
         },
         snackbarHost = {SnackbarHost(snackbarHostState)}
     ) {innerPadding ->
         ScaffoldContent(
             innerPadding = innerPadding,
-            titleState = titleState,
-            contentState = contentState
+            titleState = viewModel.titleState,
+            contentState = viewModel.contentState
         )
     }
 }
@@ -98,26 +88,21 @@ fun AddEditScreen(
 @Composable
 fun ScaffoldTopBar(
     isLoading: Boolean,
-    onDelete: () -> Unit,
-    onAdd: () -> Unit,
     onClickBack: () -> Unit,
-    successfulAction: Boolean
+    onDelete: () -> Unit,
+    onAdd: () -> Unit
 ) {
     TopAppBar(
-        navigationIcon = {
-            NavigationIcon(onClick = onClickBack)
-        },
+        navigationIcon = {NavigationIcon(onClick = {onAdd().also {onClickBack()}})},
         actions = {
             ActionsIcon(
-                onDelete = onDelete,
-                onAdd = onAdd,
                 isLoading = isLoading,
-                successfulAction = successfulAction
+                onClickBack = onClickBack,
+                onDelete = onDelete,
+                onAdd = onAdd
             )
         },
-        title = {
-            Text("Note", color = Color.White)
-        },
+        title = {Text("Note", color = Color.White)},
         colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Black)
     )
 }
@@ -125,10 +110,7 @@ fun ScaffoldTopBar(
 
 @Composable
 fun NavigationIcon(onClick: () -> Unit) {
-    IconButton(
-        modifier = Modifier,
-        onClick = onClick
-    ) {
+    IconButton(modifier = Modifier, onClick = onClick) {
         Icon(
             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
             contentDescription = "Back",
@@ -138,10 +120,7 @@ fun NavigationIcon(onClick: () -> Unit) {
 }
 
 @Composable
-fun NoteStatus(
-    isLoading: Boolean,
-    successfulAction: Boolean
-) {
+fun NoteStatus(isLoading: Boolean) {
     if (isLoading) {
         AnimatedVisibility(visible = true) {
             CircularProgressIndicator(
@@ -151,44 +130,25 @@ fun NoteStatus(
             )
         }
     }
-//    else if (successfulAction) {
-//        Icon(
-//            modifier = Modifier.size(30.dp),
-//            imageVector = Icons.Default.Check, contentDescription = "Right",
-//            tint = Color.White
-//        )
-//    } else {
-//        Icon(
-//            modifier = Modifier.size(30.dp),
-//            imageVector = Icons.Default.Clear, contentDescription = "Wrong",
-//            tint = Color.White
-//        )
-//    }
 }
 
 @Composable
 fun ActionsIcon(
+    isLoading: Boolean,
     onDelete: () -> Unit,
     onAdd: () -> Unit,
-    isLoading: Boolean,
-    successfulAction: Boolean
+    onClickBack: () -> Unit
 ) {
-    NoteStatus(isLoading, successfulAction)
+    NoteStatus(isLoading)
     Spacer(modifier = Modifier.width(16.dp))
-    IconButton(
-        onClick = onDelete,
-        enabled = !isLoading
-    ) {
+    IconButton(onClick = {onDelete().also {onClickBack()}}, enabled = !isLoading) {
         Icon(
             imageVector = Icons.Default.Delete,
             contentDescription = "Delete",
             tint = Color.White
         )
     }
-    IconButton(
-        onClick = onAdd,
-        enabled = !isLoading
-    ) {
+    IconButton(onClick = onAdd, enabled = !isLoading) {
         Icon(
             imageVector = Icons.Default.Add,
             contentDescription = "Add",
@@ -230,9 +190,7 @@ fun ScaffoldContent(
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun TitleTextField(
-    titleState: TextFieldState
-) {
+fun TitleTextField(titleState: TextFieldState) {
     CustomBasicTextField(
         addModifier = Modifier
             .fillMaxWidth()
@@ -243,7 +201,7 @@ fun TitleTextField(
         cursorColor = Color.White,
         textStyle = TextStyle(color = Color.White),
         placeholder = "Title",
-        textFieldColors = ExposedDropdownMenuDefaults.textFieldColors(
+        textFieldColors = textFieldColors(
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent,
             focusedContainerColor = Color.Transparent,
@@ -254,9 +212,7 @@ fun TitleTextField(
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun ContentTextField(
-    contentState: TextFieldState
-) {
+fun ContentTextField(contentState: TextFieldState) {
     CustomBasicTextField(
         addModifier = Modifier
             .fillMaxWidth()
@@ -266,7 +222,7 @@ fun ContentTextField(
         textFieldState = contentState,
         textStyle = TextStyle(color = Color.White),
         cursorColor = Color.White,
-        textFieldColors = ExposedDropdownMenuDefaults.textFieldColors(
+        textFieldColors = textFieldColors(
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent,
             focusedContainerColor = Color.Transparent,
