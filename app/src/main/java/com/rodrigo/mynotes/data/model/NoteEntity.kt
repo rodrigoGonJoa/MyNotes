@@ -3,8 +3,8 @@ package com.rodrigo.mynotes.data.model
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.rodrigo.mynotes.domain.model.Note
 import com.rodrigo.mynotes.data.utils.DataConstants
+import com.rodrigo.mynotes.domain.model.Note
 
 @Entity(tableName = DataConstants.NOTE_TABLE_NAME)
 data class NoteEntity(

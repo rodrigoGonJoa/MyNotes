@@ -4,5 +4,4 @@ sealed class AddEditEvents {
     data object OnDeleteNote: AddEditEvents()
     data object OnAddNote: AddEditEvents()
     data object OnGetNote: AddEditEvents()
-
 }

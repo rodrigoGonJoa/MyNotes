@@ -1,5 +1,6 @@
 package com.rodrigo.mynotes.presentation.add_edit_note
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -32,7 +33,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -40,6 +43,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.rodrigo.mynotes.presentation.composables.CustomBasicTextField
+import com.rodrigo.mynotes.presentation.composables.DeleteNoteDialog
 import com.rodrigo.mynotes.presentation.composables.hideSoftKeyboardOnClick
 
 
@@ -53,13 +57,29 @@ fun AddEditScreen(
     viewModel.setNoteId(noteIdFromNoteList)
 
     val snackbarHostState = remember {SnackbarHostState()}
+    val isFirstComposition = remember {mutableStateOf(true)}
+    val actionPerformedToggle = viewModel.actionPerformedToggle.collectAsState()
+    val showDeleteDialog = remember {mutableStateOf(false)}
 
-    LaunchedEffect(viewModel.actionPerformedToggle.collectAsState().value) {
-        snackbarHostState.showSnackbar(viewModel.notificationMessage.value)
+    LaunchedEffect(actionPerformedToggle.value) {
+        if (!isFirstComposition.value) {
+            snackbarHostState.showSnackbar(viewModel.notificationMessage.value)
+        }
+    }
+
+    BackHandler {
+        viewModel.onEvent(AddEditEvents.OnAddNote).also {onClickBack()}
     }
 
     LaunchedEffect(remember {true}) {
         viewModel.onEvent(AddEditEvents.OnGetNote)
+        isFirstComposition.value = false
+    }
+
+    if (showDeleteDialog.value) {
+        DeleteNoteDialog(showDialog = showDeleteDialog, deleteAction = {
+            viewModel.onEvent(AddEditEvents.OnDeleteNote).also {onClickBack()}
+        })
     }
 
     Scaffold(
@@ -70,7 +90,7 @@ fun AddEditScreen(
             ScaffoldTopBar(
                 isLoading = viewModel.loading.collectAsState().value,
                 onClickBack = onClickBack,
-                onDelete = {viewModel.onEvent(AddEditEvents.OnDeleteNote)},
+                showDeleteDialog = showDeleteDialog,
                 onAdd = {viewModel.onEvent(AddEditEvents.OnAddNote)}
             )
         },
@@ -89,16 +109,15 @@ fun AddEditScreen(
 fun ScaffoldTopBar(
     isLoading: Boolean,
     onClickBack: () -> Unit,
-    onDelete: () -> Unit,
-    onAdd: () -> Unit
+    onAdd: () -> Unit,
+    showDeleteDialog: MutableState<Boolean>
 ) {
     TopAppBar(
         navigationIcon = {NavigationIcon(onClick = {onAdd().also {onClickBack()}})},
         actions = {
             ActionsIcon(
                 isLoading = isLoading,
-                onClickBack = onClickBack,
-                onDelete = onDelete,
+                showDeleteDialog = showDeleteDialog,
                 onAdd = onAdd
             )
         },
@@ -135,13 +154,12 @@ fun NoteStatus(isLoading: Boolean) {
 @Composable
 fun ActionsIcon(
     isLoading: Boolean,
-    onDelete: () -> Unit,
     onAdd: () -> Unit,
-    onClickBack: () -> Unit
+    showDeleteDialog: MutableState<Boolean>
 ) {
     NoteStatus(isLoading)
     Spacer(modifier = Modifier.width(16.dp))
-    IconButton(onClick = {onDelete().also {onClickBack()}}, enabled = !isLoading) {
+    IconButton(onClick = {showDeleteDialog.value = true}, enabled = !isLoading) {
         Icon(
             imageVector = Icons.Default.Delete,
             contentDescription = "Delete",

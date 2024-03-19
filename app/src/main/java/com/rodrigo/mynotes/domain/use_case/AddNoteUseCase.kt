@@ -1,6 +1,5 @@
 package com.rodrigo.mynotes.domain.use_case
 
-import android.util.Log
 import com.rodrigo.mynotes.data.model.DataState
 import com.rodrigo.mynotes.data.model.toUiState
 import com.rodrigo.mynotes.domain.model.Note

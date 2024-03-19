@@ -1,6 +1,8 @@
 package com.rodrigo.mynotes.presentation.note_list
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,8 +26,11 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableLongState
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -35,6 +40,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.rodrigo.mynotes.domain.model.Note
+import com.rodrigo.mynotes.presentation.composables.DeleteNoteDialog
 
 @Composable
 fun NoteListScreen(
@@ -45,11 +51,22 @@ fun NoteListScreen(
     val notificationMessage = state.notificationMessage
     val snackbarHostState = remember {SnackbarHostState()}
     val buttonTapped = remember {mutableStateOf(true)}
+    val showDeleteDialog = remember {mutableStateOf(false)}
+    val noteToDelete = remember {mutableLongStateOf(0L)}
 
     LaunchedEffect(notificationMessage, buttonTapped.value) {
         notificationMessage?.let {message ->
             snackbarHostState.showSnackbar(message)
         }
+    }
+
+    if (showDeleteDialog.value) {
+        DeleteNoteDialog(
+            showDialog = showDeleteDialog,
+            deleteAction = {
+                viewModel.onEvent(NoteListEvent.deleteNote(noteToDelete.longValue))
+            }
+        )
     }
 
     Box(
@@ -67,7 +84,13 @@ fun NoteListScreen(
             },
             snackbarHost = {SnackbarHost(snackbarHostState)},
         ) {innerPadding ->
-            NoteList(state = state, innerPadding = innerPadding, navigateToNote = navigateToNote)
+            NoteList(
+                state = state,
+                innerPadding = innerPadding,
+                navigateToNote = navigateToNote,
+                noteToDelete = noteToDelete,
+                showDeleteDialog = showDeleteDialog
+            )
         }
     }
 }
@@ -76,7 +99,9 @@ fun NoteListScreen(
 private fun NoteList(
     state: NoteListState,
     innerPadding: PaddingValues,
-    navigateToNote: (Long) -> Unit
+    navigateToNote: (Long) -> Unit,
+    noteToDelete: MutableLongState,
+    showDeleteDialog: MutableState<Boolean>
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -85,7 +110,16 @@ private fun NoteList(
         userScrollEnabled = true
     ) {
         items(state.notes) {note ->
-            NoteItemComposable(note = note, onClickNote = {navigateToNote(note.id!!)})
+            NoteItemComposable(
+                note = note,
+                onClickNote = {
+                    note.id?.let {navigateToNote(it)}
+                },
+                onLongClickNote = {
+                    showDeleteDialog.value = true
+                    noteToDelete.longValue = note.id!!
+                }
+            )
         }
     }
 
@@ -94,12 +128,20 @@ private fun NoteList(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun NoteItemComposable(note: Note, onClickNote: () -> Unit) {
+fun NoteItemComposable(
+    note: Note,
+    onClickNote: () -> Unit,
+    onLongClickNote: () -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClickNote)
+            .combinedClickable(
+                onClick = onClickNote,
+                onLongClick = onLongClickNote
+            )
     ) {
         Column(
             modifier = Modifier

@@ -16,8 +16,8 @@ fun NavigationGraph() {
     NavHost(
         navController = navController,
         startDestination = NavItem.NoteListScreen.route,
-        enterTransition = {EnterTransition.None},
-        exitTransition = {ExitTransition.None}
+//        enterTransition = {EnterTransition.None},
+//        exitTransition = {ExitTransition.None}
     ) {
         composable(
             route = NavItem.NoteListScreen.route,

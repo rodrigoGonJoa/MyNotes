@@ -1,17 +1,13 @@
 package com.rodrigo.mynotes.presentation.note_list
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.rodrigo.mynotes.data.model.DataState
 import com.rodrigo.mynotes.di.IoDispatcher
-import com.rodrigo.mynotes.domain.model.Note
 import com.rodrigo.mynotes.domain.model.UiState
 import com.rodrigo.mynotes.domain.use_case.NoteUseCases
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
