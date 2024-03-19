@@ -14,6 +14,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Card
@@ -38,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.rodrigo.mynotes.domain.model.Note
 import com.rodrigo.mynotes.presentation.composables.DeleteNoteDialog
@@ -76,7 +80,7 @@ fun NoteListScreen(
         Scaffold(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(8.dp),
+                .padding(top = 8.dp, start = 8.dp, bottom = 8.dp),
             floatingActionButton = {
                 FloatingActionButton(onClick = {navigateToNote(-1L)}) {
                     Icon(imageVector = Icons.Default.Add, contentDescription = "Add")
@@ -103,11 +107,11 @@ private fun NoteList(
     noteToDelete: MutableLongState,
     showDeleteDialog: MutableState<Boolean>
 ) {
-    LazyColumn(
+    LazyVerticalStaggeredGrid(
         modifier = Modifier.fillMaxSize(),
+        columns = StaggeredGridCells.Fixed(2),
         contentPadding = innerPadding,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        userScrollEnabled = true
+        verticalItemSpacing = 8.dp
     ) {
         items(state.notes) {note ->
             NoteItemComposable(
@@ -138,6 +142,7 @@ fun NoteItemComposable(
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(end = 8.dp)
             .combinedClickable(
                 onClick = onClickNote,
                 onLongClick = onLongClickNote
@@ -150,7 +155,11 @@ fun NoteItemComposable(
         ) {
             Text(
                 text = note.title,
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.Medium,
+                fontSize = 18.sp,
+                maxLines = 2,
+                minLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
             Spacer(modifier = Modifier.size(8.dp))
             Text(
